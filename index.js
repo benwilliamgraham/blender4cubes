@@ -72,8 +72,8 @@ function main() {
         slider.style.width = "10px";
         slider.style.height = "10px";
         slider.style.left = "30px";
-        slider.posInImageXPercent = defaultSliderPos[i][0];
-        slider.posInImageYPercent = defaultSliderPos[i][1];
+        slider.posInCanvasXPercent = defaultSliderPos[i][0];
+        slider.posInCanvasYPercent = defaultSliderPos[i][1];
         document.body.appendChild(slider);
         slider.lines = [];
 
@@ -91,17 +91,17 @@ function main() {
             const clientCenterX = e.clientX;
             const clientCenterY = e.clientY;
 
-            const imageTopLeftX = image.offsetLeft;
-            const imageTopLeftY = image.offsetTop;
+            const canvasTopLeftX = draggingCanvas.offsetLeft;
+            const canvasTopLeftY = draggingCanvas.offsetTop;
 
-            const posInImageX = clientCenterX - imageTopLeftX;
-            const posInImageY = clientCenterY - imageTopLeftY;
+            const posInCanvasX = clientCenterX - canvasTopLeftX;
+            const posInCanvasY = clientCenterY - canvasTopLeftY;
 
-            dragging.posInImageXPercent = posInImageX / image.width;
-            dragging.posInImageYPercent = posInImageY / image.height;
+            dragging.posInCanvasXPercent = posInCanvasX / draggingCanvas.width;
+            dragging.posInCanvasYPercent = posInCanvasY / draggingCanvas.height;
 
-            const clampedClientCenterX = Math.max(imageTopLeftX, Math.min(imageTopLeftX + image.width, clientCenterX));
-            const clampedClientCenterY = Math.max(imageTopLeftY, Math.min(imageTopLeftY + image.height, clientCenterY));
+            const clampedClientCenterX = Math.max(canvasTopLeftX, Math.min(canvasTopLeftX + draggingCanvas.width, clientCenterX));
+            const clampedClientCenterY = Math.max(canvasTopLeftY, Math.min(canvasTopLeftY + draggingCanvas.height, clientCenterY));
 
             dragging.style.left = clampedClientCenterX - 5 + "px";
             dragging.style.top = clampedClientCenterY - 5 + "px";
@@ -311,11 +311,11 @@ function main() {
             const slider1 = sliders[index1];
             const slider2 = sliders[index2];
 
-            const x1 = slider1.posInImageXPercent * draggingCanvas.width;
-            const y1 = slider1.posInImageYPercent * draggingCanvas.height;
+            const x1 = slider1.posInCanvasXPercent * draggingCanvas.width;
+            const y1 = slider1.posInCanvasYPercent * draggingCanvas.height;
 
-            const x2 = slider2.posInImageXPercent * draggingCanvas.width;
-            const y2 = slider2.posInImageYPercent * draggingCanvas.height;
+            const x2 = slider2.posInCanvasXPercent * draggingCanvas.width;
+            const y2 = slider2.posInCanvasYPercent * draggingCanvas.height;
 
             draggingCanvasContext.beginPath();
             draggingCanvasContext.moveTo(x1, y1);
@@ -336,9 +336,8 @@ function main() {
         gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
         const texCoordPoses = [];
         for (const slider of sliders) {
-            texCoordPoses.push(slider.posInImageXPercent, slider.posInImageYPercent);
+            texCoordPoses.push(slider.posInCanvasXPercent, slider.posInCanvasYPercent);
         }
-        console.log(texCoordPoses);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoordPoses), gl.STATIC_DRAW);
         gl.vertexAttribPointer(programInfo.attribLocations.aTexCoord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.aTexCoord);
