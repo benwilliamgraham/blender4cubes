@@ -88,23 +88,11 @@ function main() {
 
     document.body.onmousemove = (e) => {
         if (dragging) {
-            const clientCenterX = e.clientX;
-            const clientCenterY = e.clientY;
+            dragging.posInCanvasXPercent = (e.clientX - draggingCanvas.offsetLeft) / draggingCanvas.width;
+            dragging.posInCanvasYPercent = (e.clientY - draggingCanvas.offsetTop) / draggingCanvas.height;
 
-            const canvasTopLeftX = draggingCanvas.offsetLeft;
-            const canvasTopLeftY = draggingCanvas.offsetTop;
-
-            const posInCanvasX = clientCenterX - canvasTopLeftX;
-            const posInCanvasY = clientCenterY - canvasTopLeftY;
-
-            dragging.posInCanvasXPercent = posInCanvasX / draggingCanvas.width;
-            dragging.posInCanvasYPercent = posInCanvasY / draggingCanvas.height;
-
-            const clampedClientCenterX = Math.max(canvasTopLeftX, Math.min(canvasTopLeftX + draggingCanvas.width, clientCenterX));
-            const clampedClientCenterY = Math.max(canvasTopLeftY, Math.min(canvasTopLeftY + draggingCanvas.height, clientCenterY));
-
-            dragging.style.left = clampedClientCenterX - 5 + "px";
-            dragging.style.top = clampedClientCenterY - 5 + "px";
+            dragging.posInCanvasXPercent = Math.max(0, Math.min(1, dragging.posInCanvasXPercent));
+            dragging.posInCanvasYPercent = Math.max(0, Math.min(1, dragging.posInCanvasYPercent));
 
             render();
         }
@@ -323,6 +311,12 @@ function main() {
             draggingCanvasContext.strokeStyle = "#99999999";
             draggingCanvasContext.lineWidth = 2;
             draggingCanvasContext.stroke();
+        }
+
+        // Draw sliders
+        for (const slider of sliders) {
+            slider.style.left = slider.posInCanvasXPercent * draggingCanvas.width - 5 + "px";
+            slider.style.top = slider.posInCanvasYPercent * draggingCanvas.height - 5 + "px";
         }
 
         // Render cube
