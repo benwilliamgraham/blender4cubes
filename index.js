@@ -50,12 +50,31 @@ function main() {
 
     document.body.appendChild(topBar);
 
+    // Create conent div
+    const content = document.createElement("div");
+    content.style.display = "flex";
+    content.style.justifyContent = "center";
+    document.body.appendChild(content);
+
     // Create dragging canvas
     const draggingCanvas = document.createElement("canvas");
     draggingCanvas.width = 512;
     draggingCanvas.height = 512;
 
-    document.body.appendChild(draggingCanvas);
+    const draggingCanvasDiv = document.createElement("div");
+    draggingCanvasDiv.style.padding = "10px";
+
+    const draggingCanvasLabel = document.createElement("div");
+    draggingCanvasLabel.innerText = "Drag the sliders to change the image sampling:";
+    draggingCanvasLabel.style.marginBottom = "10px";
+    draggingCanvasLabel.style.color = "#FFFFFF";
+    draggingCanvasLabel.style.textAlign = "center";
+    draggingCanvasLabel.style.fontSize = "20px";
+    
+    draggingCanvasDiv.appendChild(draggingCanvasLabel);
+    draggingCanvasDiv.appendChild(draggingCanvas);
+
+    content.appendChild(draggingCanvasDiv);
 
     const draggingCanvasContext = draggingCanvas.getContext("2d");
 
@@ -68,14 +87,14 @@ function main() {
     const sliders = [];
 
     const defaultSliderPos = [
-        [0.0, 1.0], // 0
-        [0.5, 1.0], // 1
-        [0.0, 0.5], // 2
+        [0.05, 0.95], // 0
+        [0.5, 0.95], // 1
+        [0.05, 0.5], // 2
         [0.5, 0.5], // 3
-        [1.0, 1.0], // 4
-        [0.0, 0.0], // 5
-        [0.5, 0.0], // 6
-        [1.0, 0.5], // 7
+        [0.95, 0.95], // 4
+        [0.05, 0.05], // 5
+        [0.5, 0.05], // 6
+        [0.95, 0.5], // 7
     ];
     for (let i = 0; i < 8; i++) {
         const slider = document.createElement("div");
@@ -87,7 +106,7 @@ function main() {
         slider.style.left = "30px";
         slider.posInCanvasXPercent = defaultSliderPos[i][0];
         slider.posInCanvasYPercent = defaultSliderPos[i][1];
-        document.body.appendChild(slider);
+        content.appendChild(slider);
         slider.lines = [];
 
         slider.onmousedown = (e) => {
@@ -115,11 +134,28 @@ function main() {
         dragging = null;
     };
 
-    // Create canvas
+    // Create render canvas
     const renderCanvas = document.createElement("canvas");
-    renderCanvas.width = 512;
-    renderCanvas.height = 512;
-    document.body.appendChild(renderCanvas);
+    renderCanvas.width = 2048;
+    renderCanvas.height = 2048;
+    renderCanvas.style.width = "512px";
+    renderCanvas.style.height = "512px";
+
+    const renderCanvasDiv = document.createElement("div");
+    renderCanvasDiv.style.padding = "10px";
+
+    const renderCanvasLabel = document.createElement("div");
+    renderCanvasLabel.innerText = "Result:";
+    renderCanvasLabel.style.marginBottom = "10px";
+    renderCanvasLabel.style.color = "#FFFFFF";
+    renderCanvasLabel.style.textAlign = "center";
+    renderCanvasLabel.style.fontSize = "20px";
+
+    renderCanvasDiv.appendChild(renderCanvasLabel);
+    renderCanvasDiv.appendChild(renderCanvas);
+
+
+    content.appendChild(renderCanvasDiv);
 
     // Create upload button
     const uploadButton = document.createElement("input");
@@ -146,20 +182,6 @@ function main() {
         link.click();
     };
     topBar.appendChild(downloadButton);
-
-    // Create shade check mark
-    const shadeCheckMark = document.createElement("input");
-    shadeCheckMark.type = "checkbox";
-    shadeCheckMark.checked = false;
-    shadeCheckMark.style.marginLeft = "30px";
-    shadeCheckMark.onchange = (e) => {
-        render();
-    };
-    topBar.appendChild(shadeCheckMark);
-
-    const shadeCheckMarkLabel = document.createElement("label");
-    shadeCheckMarkLabel.innerText = "Shade";
-    topBar.appendChild(shadeCheckMarkLabel);
 
     // Setup WebGL
     const gl = renderCanvas.getContext("experimental-webgl", {preserveDrawingBuffer: true});
