@@ -31,6 +31,77 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 function main() {
+    // Make body take up full screen
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.width = "100%";
+    document.body.style.height = "100%";
+
+    // Create dragging canvas
+    const draggingCanvas = document.createElement("canvas");
+    draggingCanvas.width = 512;
+    draggingCanvas.height = 512;
+    document.body.appendChild(draggingCanvas);
+
+    const draggingCanvasContext = draggingCanvas.getContext("2d");
+
+    // Create image
+    const image = new Image();
+    image.style.userSelect = "none";
+    image.draggable = false;
+    
+
+    // Add 2d sliders to image
+    const sliders = [];
+
+    for (let i = 0; i < 7; i++) {
+        const slider = document.createElement("div");
+        slider.style.position = "absolute";
+        slider.style.background = "#99999999";
+        slider.style.borderRadius = "50%";
+        slider.style.width = "10px";
+        slider.style.height = "10px";
+        slider.style.left = "30px";
+        document.body.appendChild(slider);
+        slider.lines = [];
+
+        slider.onmousedown = (e) => {
+            dragging = slider;
+        };
+
+        sliders.push(slider);
+    }
+
+    let dragging = null;
+
+    document.body.onmousemove = (e) => {
+        if (dragging) {
+            const clientCenterX = e.clientX;
+            const clientCenterY = e.clientY;
+
+            const imageTopLeftX = image.offsetLeft;
+            const imageTopLeftY = image.offsetTop;
+
+            const posInImageX = clientCenterX - imageTopLeftX;
+            const posInImageY = clientCenterY - imageTopLeftY;
+
+            dragging.posInImageXPercent = posInImageX / image.width;
+            dragging.posInImageYPercent = posInImageY / image.height;
+
+            const clampedClientCenterX = Math.max(imageTopLeftX, Math.min(imageTopLeftX + image.width, clientCenterX));
+            const clampedClientCenterY = Math.max(imageTopLeftY, Math.min(imageTopLeftY + image.height, clientCenterY));
+
+            dragging.style.left = clampedClientCenterX - 5 + "px";
+            dragging.style.top = clampedClientCenterY - 5 + "px";
+
+            render();
+        }
+    };
+
+    document.body.onmouseup = (e) => {
+        dragging = null;
+    };
+
     // Create canvas
     const renderCanvas = document.createElement("canvas");
     renderCanvas.width = 512;
@@ -194,7 +265,6 @@ function main() {
         pixel
     );
 
-    const image = new Image();
     image.onload = function () {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
@@ -218,6 +288,34 @@ function main() {
 
     // Draw the scene
     function render() {
+        // Draw dragging canvas
+        draggingCanvasContext.clearRect(0, 0, draggingCanvas.width, draggingCanvas.height);
+        draggingCanvasContext.drawImage(image, 0, 0, draggingCanvas.width, draggingCanvas.height);
+
+        // Draw line between sliders
+        const sliderLinePairs = [
+            [0, 1],
+        ];
+
+        for (const [index1, index2] of sliderLinePairs) {
+            const slider1 = sliders[index1];
+            const slider2 = sliders[index2];
+
+            const x1 = slider1.posInImageXPercent * draggingCanvas.width;
+            const y1 = slider1.posInImageYPercent * draggingCanvas.height;
+
+            const x2 = slider2.posInImageXPercent * draggingCanvas.width;
+            const y2 = slider2.posInImageYPercent * draggingCanvas.height;
+
+            draggingCanvasContext.beginPath();
+            draggingCanvasContext.moveTo(x1, y1);
+            draggingCanvasContext.lineTo(x2, y2);
+            draggingCanvasContext.strokeStyle = "#99999999";
+            draggingCanvasContext.lineWidth = 2;
+            draggingCanvasContext.stroke();
+        }
+
+        // Render cube
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
