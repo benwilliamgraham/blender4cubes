@@ -36,11 +36,25 @@ function main() {
     document.body.style.padding = "0";
     document.body.style.width = "100%";
     document.body.style.height = "100%";
+    document.body.style.background = "#333333";
+
+    // Create the top bar
+    const topBar = document.createElement("div");
+    topBar.style.top = "0";
+    topBar.style.left = "0";
+    topBar.style.width = "100%";
+    topBar.style.height = "30px";
+    topBar.style.background = "#444444";
+    topBar.style.color = "#FFFFFF";
+    topBar.style.textAlign = "center";
+
+    document.body.appendChild(topBar);
 
     // Create dragging canvas
     const draggingCanvas = document.createElement("canvas");
     draggingCanvas.width = 512;
     draggingCanvas.height = 512;
+
     document.body.appendChild(draggingCanvas);
 
     const draggingCanvasContext = draggingCanvas.getContext("2d");
@@ -49,7 +63,6 @@ function main() {
     const image = new Image();
     image.style.userSelect = "none";
     image.draggable = false;
-
 
     // Add 2d sliders to image
     const sliders = [];
@@ -67,7 +80,7 @@ function main() {
     for (let i = 0; i < 8; i++) {
         const slider = document.createElement("div");
         slider.style.position = "absolute";
-        slider.style.background = "#99999999";
+        slider.style.background = "#CCCCCCCC";
         slider.style.borderRadius = "50%";
         slider.style.width = "10px";
         slider.style.height = "10px";
@@ -112,6 +125,7 @@ function main() {
     const uploadButton = document.createElement("input");
     uploadButton.type = "file";
     uploadButton.accept = "image/*";
+    uploadButton.innerText = "Upload";
     uploadButton.onchange = (e) => {
         const file = e.target.files[0];
         const reader = new FileReader();
@@ -120,10 +134,35 @@ function main() {
         };
         reader.readAsDataURL(file);
     };
-    document.body.appendChild(uploadButton);
+    topBar.appendChild(uploadButton);
+
+    // Create download button
+    const downloadButton = document.createElement("button");
+    downloadButton.innerText = "Download";
+    downloadButton.onclick = (e) => {
+        const link = document.createElement("a");
+        link.download = "image.png";
+        link.href = renderCanvas.toDataURL("image/png");
+        link.click();
+    };
+    topBar.appendChild(downloadButton);
+
+    // Create shade check mark
+    const shadeCheckMark = document.createElement("input");
+    shadeCheckMark.type = "checkbox";
+    shadeCheckMark.checked = false;
+    shadeCheckMark.style.marginLeft = "30px";
+    shadeCheckMark.onchange = (e) => {
+        render();
+    };
+    topBar.appendChild(shadeCheckMark);
+
+    const shadeCheckMarkLabel = document.createElement("label");
+    shadeCheckMarkLabel.innerText = "Shade";
+    topBar.appendChild(shadeCheckMarkLabel);
 
     // Setup WebGL
-    const gl = renderCanvas.getContext("webgl");
+    const gl = renderCanvas.getContext("experimental-webgl", {preserveDrawingBuffer: true});
 
     if (!gl) {
         console.error("WebGL not supported");
@@ -308,15 +347,15 @@ function main() {
             draggingCanvasContext.beginPath();
             draggingCanvasContext.moveTo(x1, y1);
             draggingCanvasContext.lineTo(x2, y2);
-            draggingCanvasContext.strokeStyle = "#99999999";
+            draggingCanvasContext.strokeStyle = "#CCCCCCCC";
             draggingCanvasContext.lineWidth = 2;
             draggingCanvasContext.stroke();
         }
 
         // Draw sliders
         for (const slider of sliders) {
-            slider.style.left = slider.posInCanvasXPercent * draggingCanvas.width - 5 + "px";
-            slider.style.top = slider.posInCanvasYPercent * draggingCanvas.height - 5 + "px";
+            slider.style.left = draggingCanvas.offsetLeft + slider.posInCanvasXPercent * draggingCanvas.width - 5 + "px";
+            slider.style.top = draggingCanvas.offsetTop + slider.posInCanvasYPercent * draggingCanvas.height - 5 + "px";
         }
 
         // Render cube
