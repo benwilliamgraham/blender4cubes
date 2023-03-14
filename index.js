@@ -49,12 +49,22 @@ function main() {
     const image = new Image();
     image.style.userSelect = "none";
     image.draggable = false;
-    
+
 
     // Add 2d sliders to image
     const sliders = [];
 
-    for (let i = 0; i < 7; i++) {
+    const defaultSliderPos = [
+        [0.0, 1.0], // 0
+        [0.5, 1.0], // 1
+        [0.0, 0.5], // 2
+        [0.5, 0.5], // 3
+        [1.0, 1.0], // 4
+        [0.0, 0.0], // 5
+        [0.5, 0.0], // 6
+        [1.0, 0.5], // 7
+    ];
+    for (let i = 0; i < 8; i++) {
         const slider = document.createElement("div");
         slider.style.position = "absolute";
         slider.style.background = "#99999999";
@@ -62,6 +72,8 @@ function main() {
         slider.style.width = "10px";
         slider.style.height = "10px";
         slider.style.left = "30px";
+        slider.posInImageXPercent = defaultSliderPos[i][0];
+        slider.posInImageYPercent = defaultSliderPos[i][1];
         document.body.appendChild(slider);
         slider.lines = [];
 
@@ -214,17 +226,6 @@ function main() {
     ]), gl.STATIC_DRAW);
 
     const texCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        0.0, 1.0, // 0
-        0.5, 1.0, // 1
-        0.0, 0.5, // 2
-        0.5, 0.5, // 3
-        1.0, 1.0, // 4
-        0.0, 0.0, // 5
-        0.5, 0.0, // 6
-        1.0, 0.5, // 7
-    ]), gl.STATIC_DRAW);
 
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -295,6 +296,15 @@ function main() {
         // Draw line between sliders
         const sliderLinePairs = [
             [0, 1],
+            [0, 2],
+            [1, 3],
+            [1, 4],
+            [2, 3],
+            [2, 5],
+            [3, 6],
+            [3, 7],
+            [4, 7],
+            [5, 6],
         ];
 
         for (const [index1, index2] of sliderLinePairs) {
@@ -324,6 +334,12 @@ function main() {
         gl.enableVertexAttribArray(programInfo.attribLocations.aPos);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+        const texCoordPoses = [];
+        for (const slider of sliders) {
+            texCoordPoses.push(slider.posInImageXPercent, slider.posInImageYPercent);
+        }
+        console.log(texCoordPoses);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoordPoses), gl.STATIC_DRAW);
         gl.vertexAttribPointer(programInfo.attribLocations.aTexCoord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.aTexCoord);
 
