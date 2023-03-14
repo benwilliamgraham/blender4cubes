@@ -31,7 +31,25 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 function main() {
-    const renderCanvas = document.querySelector("#render");
+    // Create canvas
+    const renderCanvas = document.createElement("canvas");
+    renderCanvas.width = 512;
+    renderCanvas.height = 512;
+    document.body.appendChild(renderCanvas);
+
+    // Create upload button
+    const uploadButton = document.createElement("input");
+    uploadButton.type = "file";
+    uploadButton.accept = "image/*";
+    uploadButton.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+    document.body.appendChild(uploadButton);
 
     // Setup WebGL
     const gl = renderCanvas.getContext("webgl");
@@ -92,10 +110,10 @@ function main() {
     /* Cube is as follows:
      *           5
      *       #       # 
-     *   2       y+      6(y+)/7(z+)
+     *   2       y+      6(y+)/7(x+)
      *   #   #       #   #
      *   #       3       #
-     *   #   x+  #   z+  #
+     *   #   z+  #   x+  #
      *   0       #       4
      *       #   #   # 
      *           1
@@ -114,14 +132,14 @@ function main() {
     const posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        1.0, -1.0, -1.0, // 0
+        -1.0, -1.0, 1.0, // 0
         1.0, -1.0, 1.0, // 1
-        1.0, 1.0, -1.0, // 2
+        -1.0, 1.0, 1.0, // 2
         1.0, 1.0, 1.0, // 3
-        -1.0, -1.0, 1.0, // 4
+        1.0, -1.0, -1.0, // 4
         -1.0, 1.0, -1.0, // 5
-        -1.0, 1.0, 1.0, // 6
-        -1.0, 1.0, 1.0, // 7
+        1.0, 1.0, -1.0, // 6
+        1.0, 1.0, -1.0, // 7
     ]), gl.STATIC_DRAW);
 
     const texCoordBuffer = gl.createBuffer();
