@@ -65,7 +65,7 @@ function main() {
     varying vec2 vTexCoord;
 
     void main(void) {
-        gl_FragColor = texture2D(uSampler, vTexCoord) + vec4(1.0, 0.0, 0.0, 1.0);
+        gl_FragColor = texture2D(uSampler, vTexCoord);
     }
     `;
 
@@ -89,90 +89,100 @@ function main() {
     };
 
     // Setup buffers
+    /* Cube is as follows:
+     *           5
+     *       #       # 
+     *   2       y+      6(y+)/7(z+)
+     *   #   #       #   #
+     *   #       3       #
+     *   #   x+  #   z+  #
+     *   0       #       4
+     *       #   #   # 
+     *           1
+     * 
+     * which unrolled is:
+     *   
+     *  *--> x
+     *  |
+     *  y   5---6
+     *      |   |
+     *      2---3---7
+     *      |   |   |
+     *      0---1---4
+     */
+
     const posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        // Front face
-        -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
-
-        // Back face
-        -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0,
-
-        // Top face
-        -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0,
-
-        // Bottom face
-        -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0,
-
-        // Right face
-        1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0,
-
-        // Left face
-        -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0,
+        1.0, -1.0, -1.0, // 0
+        1.0, -1.0, 1.0, // 1
+        1.0, 1.0, -1.0, // 2
+        1.0, 1.0, 1.0, // 3
+        -1.0, -1.0, 1.0, // 4
+        -1.0, 1.0, -1.0, // 5
+        -1.0, 1.0, 1.0, // 6
+        -1.0, 1.0, 1.0, // 7
     ]), gl.STATIC_DRAW);
 
     const texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-        // Front face
-        0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0,
-
-        // Back face
-        1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-
-        // Top face
-        0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-
-        // Bottom face
-        1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0,
-
-        // Right face
-        1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
-
-        // Left face
-        0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
+        0.0, 1.0, // 0
+        0.5, 1.0, // 1
+        0.0, 0.5, // 2
+        0.5, 0.5, // 3
+        1.0, 1.0, // 4
+        0.0, 0.0, // 5
+        0.5, 0.0, // 6
+        1.0, 0.5, // 7
     ]), gl.STATIC_DRAW);
 
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([
-        0,
-        1,
-        2,
-        0,
-        2,
-        3, // front
-        4,
-        5,
-        6,
-        4,
-        6,
-        7, // back
-        8,
-        9,
-        10,
-        8,
-        10,
-        11, // top
-        12,
-        13,
-        14,
-        12,
-        14,
-        15, // bottom
-        16,
-        17,
-        18,
-        16,
-        18,
-        19, // right
-        20,
-        21,
-        22,
-        20,
-        22,
-        23, // left
+        0, 2, 3, 0, 3, 1, // x+
+        2, 5, 6, 2, 6, 3, // y+
+        1, 3, 7, 1, 7, 4, // z+
     ]), gl.STATIC_DRAW);
+
+    // Load texture
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Set the parameters so we can render any size image.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    // Upload the image into the texture.
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        width,
+        height,
+        border,
+        srcFormat,
+        srcType,
+        pixel
+    );
+
+    const image = new Image();
+    image.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+        render();
+    };
+    image.src = "placeholder.png";
 
     // Create projection matrix
     const fieldOfView = (5 * Math.PI) / 180; // in radians
@@ -186,7 +196,7 @@ function main() {
     const modelMat = mat4.create();
     mat4.translate(modelMat, modelMat, [0.0, 0.0, -50.0]);
     mat4.rotate(modelMat, modelMat, (45 * Math.PI) / 180, [1.0, 0.0, 0.0]);
-    mat4.rotate(modelMat, modelMat, (45 * Math.PI) / 180, [0.0, 1.0, 0.0]);
+    mat4.rotate(modelMat, modelMat, (-45 * Math.PI) / 180, [0.0, 1.0, 0.0]);
 
     // Draw the scene
     function render() {
@@ -207,10 +217,10 @@ function main() {
         gl.uniformMatrix4fv(programInfo.uniformLocations.uProjMat, false, projMat);
 
         gl.activeTexture(gl.TEXTURE0);
-        // gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
-        gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0);
     }
 
     render();
